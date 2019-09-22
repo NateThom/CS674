@@ -55,7 +55,7 @@ def histogram_norm(image, name):
     image_width, image_height = image.size
 
     histogram = get_histogram(image)
-    plot_histogram(histogram, name + "-in")
+    plot_histogram(histogram, name + "-eq" + "-in")
 
     pixel_map = [0] * 256
     corrected_pixels = 0
@@ -67,17 +67,49 @@ def histogram_norm(image, name):
 
     histogram_eq(image, pixel_map)
 
-    plot_histogram(get_histogram(image), name + "-out")
+    plot_histogram(get_histogram(image), name + "-eq" + "-out")
+
+    return image
+
+def histogram_spec(image, target_dist_hist, name):
+    image_width, image_height = image.size
+
+    histogram = get_histogram(image)
+    plot_histogram(histogram, name + "-spec" + "-in")
+
+    pixel_map_1 = [0] * 256
+    corrected_pixels_1 = 0
+
+    sum_r = image_width * image_height
+    for i in range(256):
+        corrected_pixels_1 += histogram[i]
+        pixel_map_1 = (corrected_pixels_1*255) // sum_r
+
+    histogram_eq(image, pixel_map_1)
+
+    pixel_map_2 = [0] * 256
+    corrected_pixels_2 = 0
+
+    for i in range(256):
+        corrected_pixels_2 += target_dist_hist[i]
+        if (corrected_pixels_2 - ((corrected_pixels_2 * sum_r) / 255)) < (corrected_pixels_2 - ((corrected_pixels_2 * sum_r) // 255)):
+            pixel_map_2 = ((corrected_pixels_2 * sum_r) // 255) + 1
+        else:
+            pixel_map_2 = (corrected_pixels_2 * sum_r) // 255
+
+    histogram_eq(image, pixel_map_2)
+
+    plot_histogram(get_histogram(image), name + "-spec" + "-out")
 
     return image
 
 for part in range(4):
     if not os.path.exists("part{}_output".format(part+1)):
         os.makedirs("part{}_output".format(part+1))
-if not os.path.exists("histograms".format(part+1)):
-    os.makedirs("histograms".format(part+1))
-if not os.path.exists("part2_eq".format(part+1)):
-    os.makedirs("part2_eq".format(part+1))
+if not os.path.exists("histograms"):
+    os.makedirs("histograms")
+if not os.path.exists("part2_eq"):
+    os.makedirs("part2_eq")
 
 for image_path in glob.glob("../images-pgm/*"):
     basename = image_path.split("/")[-1].split(".")[0]
@@ -100,3 +132,4 @@ for image_path in glob.glob("../images-pgm/*"):
     change_quantization(normalized.copy(),2).save("part2_eq/{}-{}.pgm".format(basename,2))
 
     histogram_norm(image, basename).save("part3_output/{}.pgm".format(basename))
+    histogram_spec(image, target_dist_hist, basename).save("part4_output/{}.pgm".format(basename))
