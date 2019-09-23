@@ -50,6 +50,9 @@ def histogram_eq(image, map):
     for i in range(image_width):
         for j in range(image_height):
             image.putpixel((i,j), map[image.getpixel((i,j))])
+            # print(image.getpixel((i,j)))
+            # print(map[image.getpixel((i,j))])
+            # print()
 
 def histogram_norm(image, name):
     image_width, image_height = image.size
@@ -71,11 +74,15 @@ def histogram_norm(image, name):
 
     return image
 
-def histogram_spec(image, target_dist_hist, name):
+def histogram_spec(image, path_to_image_histogram, name):
     image_width, image_height = image.size
 
     histogram = get_histogram(image)
     plot_histogram(histogram, name + "-spec" + "-in")
+
+    target_dist_image = Image.open(path_to_image_histogram)
+    target_dist_hist = get_histogram(target_dist_image)
+    plot_histogram(target_dist_hist, "spec" + "-dist-" + path_to_image_histogram.split("/")[-1])
 
     pixel_map_1 = [0] * 256
     corrected_pixels_1 = 0
@@ -83,23 +90,26 @@ def histogram_spec(image, target_dist_hist, name):
     sum_r = image_width * image_height
     for i in range(256):
         corrected_pixels_1 += histogram[i]
-        pixel_map_1 = (corrected_pixels_1*255) // sum_r
-
-    histogram_eq(image, pixel_map_1)
+        pixel_map_1[i] = (corrected_pixels_1*255) // sum_r
 
     pixel_map_2 = [0] * 256
     corrected_pixels_2 = 0
 
     for i in range(256):
         corrected_pixels_2 += target_dist_hist[i]
-        if (corrected_pixels_2 - ((corrected_pixels_2 * sum_r) / 255)) < (corrected_pixels_2 - ((corrected_pixels_2 * sum_r) // 255)):
-            pixel_map_2 = ((corrected_pixels_2 * sum_r) // 255) + 1
-        else:
-            pixel_map_2 = (corrected_pixels_2 * sum_r) // 255
+        pixel_map_2[i] = (corrected_pixels_2 * 255) // sum_r
 
-    histogram_eq(image, pixel_map_2)
+    inverse_mapping_dict = {}
+    for i in range(256):
+        inverse_mapping_dict[i] = pixel_map_2[i]
 
-    plot_histogram(get_histogram(image), name + "-spec" + "-out")
+    pixel_map_3 = [0] * 256
+    for i in range(256):
+        pixel_map_3[i] = inverse_mapping_dict[pixel_map_1[i]]
+
+    histogram_eq(image, pixel_map_3)
+
+    plot_histogram(get_histogram(image), name + "-spec" + "-out" + "-dist-" + path_to_image_histogram.split("/")[-1])
 
     return image
 
@@ -132,4 +142,8 @@ for image_path in glob.glob("../images-pgm/*"):
     change_quantization(normalized.copy(),2).save("part2_eq/{}-{}.pgm".format(basename,2))
 
     histogram_norm(image, basename).save("part3_output/{}.pgm".format(basename))
-    histogram_spec(image, target_dist_hist, basename).save("part4_output/{}.pgm".format(basename))
+
+    image = Image.open(image_path)
+    histogram_spec(image, "../images-pgm/sf.pgm", basename).save("part4_output/{}.pgm".format(basename + "_sf_dist"))
+    image = Image.open(image_path)
+    histogram_spec(image, "../images-pgm/peppers.pgm", basename).save("part4_output/{}.pgm".format(basename + "_peppers_dist"))
