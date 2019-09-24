@@ -58,7 +58,7 @@ def histogram_norm(image, name):
     image_width, image_height = image.size
 
     histogram = get_histogram(image)
-    plot_histogram(histogram, name + "-eq" + "-in")
+    plot_histogram(histogram, name + "-eq-in")
 
     pixel_map = [0] * 256
     corrected_pixels = 0
@@ -70,7 +70,7 @@ def histogram_norm(image, name):
 
     histogram_eq(image, pixel_map)
 
-    plot_histogram(get_histogram(image), name + "-eq" + "-out")
+    plot_histogram(get_histogram(image), name + "-eq-out")
 
     return image
 
@@ -78,11 +78,11 @@ def histogram_spec(image, path_to_image_histogram, name):
     image_width, image_height = image.size
 
     histogram = get_histogram(image)
-    plot_histogram(histogram, name + "-spec" + "-in")
+    plot_histogram(histogram, name + "-spec-in")
 
     target_dist_image = Image.open(path_to_image_histogram)
     target_dist_hist = get_histogram(target_dist_image)
-    plot_histogram(target_dist_hist, "spec" + "-dist-" + path_to_image_histogram.split("/")[-1])
+    plot_histogram(target_dist_hist, "spec-dist-" + path_to_image_histogram.split("/")[-1])
 
     pixel_map_1 = [0] * 256
     corrected_pixels_1 = 0
@@ -108,18 +108,12 @@ def histogram_spec(image, path_to_image_histogram, name):
         if pixel_map_1[i] in inverse_mapping_dict:
             pixel_map_3[i] = inverse_mapping_dict[pixel_map_1[i]]
         else:
-            closest_value = -1
-            distance_to_closest = 256
-            values_in_inverse_map = list(inverse_mapping_dict.keys())
-            for j in range(0, len(values_in_inverse_map), 1):
-                if abs(values_in_inverse_map[j]) < distance_to_closest:
-                    closest_value = values_in_inverse_map[j]
-                    distance_to_closest = abs(values_in_inverse_map[j] - pixel_map_1[i])
-            pixel_map_3[i] = inverse_mapping_dict[closest_value]
+            closest = min(list(inverse_mapping_dict.keys()), key=lambda x: abs(x-pixel_map_1[i]))
+            pixel_map_3[i] = inverse_mapping_dict[closest]
 
     histogram_eq(image, pixel_map_3)
 
-    plot_histogram(get_histogram(image), name + "-spec" + "-out" + "-dist-" + path_to_image_histogram.split("/")[-1])
+    plot_histogram(get_histogram(image), name + "-spec-out-dist-" + path_to_image_histogram.split("/")[-1])
 
     return image
 
