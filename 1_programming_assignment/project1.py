@@ -101,11 +101,21 @@ def histogram_spec(image, path_to_image_histogram, name):
 
     inverse_mapping_dict = {}
     for i in range(256):
-        inverse_mapping_dict[i] = pixel_map_2[i]
+        inverse_mapping_dict[pixel_map_2[i]] = i
 
     pixel_map_3 = [0] * 256
     for i in range(256):
-        pixel_map_3[i] = inverse_mapping_dict[pixel_map_1[i]]
+        if pixel_map_1[i] in inverse_mapping_dict:
+            pixel_map_3[i] = inverse_mapping_dict[pixel_map_1[i]]
+        else:
+            closest_value = -1
+            distance_to_closest = 256
+            values_in_inverse_map = list(inverse_mapping_dict.keys())
+            for j in range(0, len(values_in_inverse_map), 1):
+                if abs(values_in_inverse_map[j]) < distance_to_closest:
+                    closest_value = values_in_inverse_map[j]
+                    distance_to_closest = abs(values_in_inverse_map[j] - pixel_map_1[i])
+            pixel_map_3[i] = inverse_mapping_dict[closest_value]
 
     histogram_eq(image, pixel_map_3)
 
