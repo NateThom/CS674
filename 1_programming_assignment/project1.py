@@ -3,7 +3,7 @@ import os
 import glob
 import matplotlib.pyplot as plt
 
-def sample(image, factor):
+def sample(image, factor, name):
     image_width, image_height = image.size
 
     new_pixels = []
@@ -14,6 +14,8 @@ def sample(image, factor):
     new_image = Image.new('L', (image_width // factor, image_height // factor))
     new_image.putdata(new_pixels)
     new_image = new_image.resize((image_width, image_height))
+
+    plot_histogram(get_histogram(new_image), name + "-sample-" + str(factor))
 
     return new_image
 
@@ -131,9 +133,9 @@ for image_path in glob.glob("../images-pgm/*"):
 
     normalized = histogram_norm(image.copy(), basename)
 
-    sample(image,2).save("part1_output/{}-{}.pgm".format(basename,2))
-    sample(image,4).save("part1_output/{}-{}.pgm".format(basename,4))
-    sample(image,8).save("part1_output/{}-{}.pgm".format(basename,8))
+    sample(image,2, basename).save("part1_output/{}-{}.pgm".format(basename,2))
+    sample(image,4, basename).save("part1_output/{}-{}.pgm".format(basename,4))
+    sample(image,8, basename).save("part1_output/{}-{}.pgm".format(basename,8))
 
     change_quantization(image.copy(),128).save("part2_output/{}-{}.pgm".format(basename,128))
     change_quantization(image.copy(),32).save("part2_output/{}-{}.pgm".format(basename,32))
