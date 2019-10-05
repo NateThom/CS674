@@ -1,7 +1,6 @@
 from PIL import Image
-from PIL import Image
 
-def convolve(image, convolution):
+def convolve(image, convolution, padding=0):
     pixels = image.load()
     width, height = image.size
     conv_size = len(convolution)
@@ -19,8 +18,7 @@ def convolve(image, convolution):
                     if i + h_offset < 0 or i + h_offset >= width\
                                         or j + v_offset < 0\
                                         or j + v_offset >= height:
-                        # this doesn't actually do anything it's okay
-                        weighted_sum += 0
+                        weighted_sum += padding
                     else:
                         weighted_sum += pixels[i+h_offset, j+v_offset]*convolution[h_offset][v_offset]
             pixels_new[i,j] = int(weighted_sum)
@@ -29,8 +27,6 @@ def convolve(image, convolution):
 
 image = Image.open("nate.pgm")
 
-filter = [[1/9,1/9,1/9],
-          [1/9,1/9,1/9],
-          [1/9,1/9,1/9]]
+filter = [[1/9]*3]*3
 
 convolve(image, filter).save("nate-improved.png")
