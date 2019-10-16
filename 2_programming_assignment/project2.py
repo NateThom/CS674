@@ -1,6 +1,11 @@
 from PIL import Image
 
-def normalize(input_list):
+def normalize_1d(input_list):
+    output_list = [float(input_list[i])/sum(input_list) for i in range(len(input_list))]
+
+    return output_list
+
+def normalize_2d(input_list):
     list_sum = 0
     for i in input_list:
         list_sum += sum(i)
@@ -9,14 +14,40 @@ def normalize(input_list):
 
     return output_list
 
+def normalize_0_255(input_list):
+    min = 999999
+    max = 0
+    for width in range(len(input_list)):
+        for height in range(len(input_list[width])):
+            if min > input_list[width][height]:
+                min = input_list[width][height]
+            if max < input_list[width][height]:
+                max = input_list[width][height]
+
+    for width in range(len(input_list)):
+        for height in range(len(input_list[width])):
+            input_list[width][height] = int((input_list[width][height] - min) * (255 / (max - min)))
+
+    return input_list
+
 def image_to_list(image):
     width, height = image.size
     output_list = []
     for i in range(width):
         output_list.append([])
         for j in range(height):
-            output_list.append(image.getpixel((i,j)))
+            output_list[i].append(image.getpixel((i,j)))
     return output_list
+
+def list_to_image(image_list, image):
+    width = len(image_list)
+    height = len(image_list[0])
+    output_image = Image.new(image.mode, image.size)
+    output_image_pixels = output_image.load()
+    for i in range(width):
+        for j in range(height):
+            output_image_pixels[i, j] = image_list[i][j]
+    return output_image
 
 def convolve(image, convolution, padding=0):
     pixels = image.load()
@@ -39,36 +70,48 @@ def convolve(image, convolution, padding=0):
                                         or j + v_offset >= height:
                         weighted_sum += padding
                     else:
-                        weighted_sum += pixels[i+h_offset, j+v_offset]*convolution[h_offset][v_offset]
+                        weighted_sum += pixels[i+h_offset, j+v_offset]*convolution[n][k]
             pixels_new[i,j] = int(weighted_sum)
 
     return new_img
 
 def correlate(image, correlation, padding=0):
-    pixels = image.load()
-    width, height = image.size
-    conv_size = len(correlation)
+    image_list = image_to_list(image)
 
-    new_img = Image.new(image.mode, image.size)
-    pixels_new = new_img.load()
+    # pixels = image.load()
+    width, height = image.size
+    conv_width = len(correlation)
+    conv_height = len(correlation[0])
+    pixels = image_list
+    width = len(image_list)
+    height = len(image_list[0])
+
+    new_image_list = []
+
+    # new_image = Image.new(image.mode, image.size)
+    # pixels_new = new_image.load()
 
     for i in range(width):
         print(i)
+        new_image_list.append([])
         for j in range(height):
             weighted_sum = 0
-            for n in range(conv_size):
-                for k in range(conv_size):
-                    v_offset = n - conv_size // 2
-                    h_offset = k - conv_size // 2
+            for n in range(conv_width):
+                for k in range(conv_height):
+                    v_offset = n - conv_width // 2
+                    h_offset = k - conv_height // 2
                     if i + h_offset < 0 or i + h_offset >= width\
                                         or j + v_offset < 0\
                                         or j + v_offset >= height:
                         weighted_sum += padding
                     else:
-                        weighted_sum += pixels[i+h_offset, j+v_offset]*correlation[n][k]
-            pixels_new[i,j] = int(weighted_sum)
-
-    return new_img
+                        # weighted_sum += pixels[i + h_offset, j + v_offset] * correlation[n][k]
+                        weighted_sum += pixels[i+h_offset][j+v_offset]*correlation[n][k]
+            new_image_list[i].append(int(weighted_sum))
+            # pixels_new[i,j] = int(weighted_sum)
+    new_img_list = normalize_0_255(new_image_list)
+    new_image = list_to_image(new_img_list, image)
+    return new_image
 
 
 correlation_input = input("Do you want to build your own correlation mask? Enter 'y' for yes, any other key for no: ")
@@ -83,14 +126,11 @@ if correlation_input is 'y':
 else:
     filter = Image.open("../images-pgm/Pattern.pgm")
     filter = image_to_list(filter)
+    # filter = normalize_2d(filter)
 
 image = Image.open("../images-pgm/Image.pgm")
 
-# filter = [[1/9]*3]*3
-
-# convolve(image, filter).save("convolution.png")
-# correlate(image, filter).save("correlation.png")
-
+correlate(image, filter).save("correlation_norm_filter.png")
 
 # image = Image.open("../images-pgm/lenna.pgm")
 #
@@ -108,4 +148,5 @@ image = Image.open("../images-pgm/Image.pgm")
 # correlate(image, norm_gaus_mask_7_7).save("smoothing_7_7.png")
 # correlate(image, norm_gaus_mask_8_8).save("smoothing_8_8.png")
 
-median_input = int(input("Enter the size of your median filter: "))
+# median_input = int(input("Enter the size of your median filter: "))
+
