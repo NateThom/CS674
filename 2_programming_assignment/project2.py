@@ -105,7 +105,6 @@ def convolve(image, convolution, padding=0):
 def correlate(image, correlation, padding=0, median_flag=0):
     image_list = image_to_list(image)
 
-    # pixels = image.load()
     width, height = image.size
     corr_width = len(correlation)
     corr_height = len(correlation[0])
@@ -114,9 +113,6 @@ def correlate(image, correlation, padding=0, median_flag=0):
     height = len(image_list[0])
 
     new_image_list = []
-
-    # new_image = Image.new(image.mode, image.size)
-    # pixels_new = new_image.load()
 
     for i in range(width):
         print(i)
@@ -139,7 +135,6 @@ def correlate(image, correlation, padding=0, median_flag=0):
                         else:
                             weighted_sum += padding
                     else:
-                        # weighted_sum += pixels[i + h_offset, j + v_offset] * correlation[n][k]
                         if median_flag is 1:
                             neighborhood_pixels.append(pixels[i + h_offset][j + v_offset])
                         else:
@@ -147,10 +142,8 @@ def correlate(image, correlation, padding=0, median_flag=0):
             if median_flag is 1:
                 new_image_list[i].append(sorted(neighborhood_pixels)[len(neighborhood_pixels)//2])
             else:
-                new_image_list[i].append(int(weighted_sum))
-            # pixels_new[i,j] = int(weighted_sum)
-    if median_flag is 0:
-        new_image_list = normalize_0_255(new_image_list)
+                new_image_list[i].append(int(weighted_sum // (corr_width * corr_height)))
+
     new_image = list_to_image(new_image_list, image)
     return new_image
 
@@ -169,29 +162,36 @@ else:
     filter = image_to_list(filter)
     # filter = normalize_2d(filter)
 
-# image = Image.open("../images-pgm/Image.pgm")
+#image = Image.open("../images-pgm/Image.pgm")
 
-# correlate(image, filter).save("correlation_norm_filter.png")
+# correlate(image, filter).save("correlation_no_norm.png")
 
 image = Image.open("../images-pgm/lenna.pgm")
 
-# gaus_mask_7_7 = [[1,1,2,2,2,1,1],[1,2,2,4,2,2,1],[2,2,4,8,4,2,2],[2,4,8,16,8,4,2],[2,2,4,8,4,2,2],[1,2,2,4,2,2,1],[1,1,2,2,2,1,1]]
+#gaus_mask_7_7 = [[1,1,2,2,2,1,1],[1,2,2,4,2,2,1],[2,2,4,8,4,2,2],[2,4,8,16,8,4,2],[2,2,4,8,4,2,2],[1,2,2,4,2,2,1],[1,1,2,2,2,1,1]]
 
-# gaus_mask_8_8 = [[2,2,3,4,5,5,6,6,6,5,5,4,3,2,2],[2,3,4,5,7,7,8,8,8,7,7,5,4,3,2],[3,4,6,7,9,10,10,11,10,10,9,7,6,4,3],
+#gaus_mask_8_8 = [[2,2,3,4,5,5,6,6,6,5,5,4,3,2,2],[2,3,4,5,7,7,8,8,8,7,7,5,4,3,2],[3,4,6,7,9,10,10,11,10,10,9,7,6,4,3],
 #                  [4,5,7,9,11,12,13,13,13,12,11,9,7,5,4],[5,7,9,10,13,14,15,16,15,14,13,10,9,7,5],[5,7,10,12,14,16,17,18,17,16,14,12,10,7,5],
 #                  [6,8,10,13,15,17,19,19,19,17,15,13,10,8,6],[6,8,11,13,16,18,19,20,19,18,16,13,11,8,6],[6,8,10,13,15,17,19,19,19,17,15,13,10,8,6],
 #                  [5,7,10,12,14,16,17,18,17,16,14,12,10,7,5],[5,7,9,10,13,14,15,16,15,14,13,10,9,7,5],[4,5,7,9,11,12,13,13,13,12,11,9,7,5,4],
 #                  [3,4,6,7,9,10,10,11,10,10,9,7,6,4,3],[2,3,4,5,7,7,8,8,8,7,7,5,4,3,2],[2,2,3,4,5,5,6,6,6,5,5,4,3,2,2]]
 
-# norm_gaus_mask_7_7 = normalize_2d(gaus_mask_7_7)
-# norm_gaus_mask_8_8 = normalize_2d(gaus_mask_8_8)
+#norm_gaus_mask_7_7 = normalize_2d(gaus_mask_7_7)
+#norm_gaus_mask_8_8 = normalize_2d(gaus_mask_8_8)
 
-# correlate(image, norm_gaus_mask_7_7).save("smoothing_7_7.png")
-# correlate(image, norm_gaus_mask_8_8).save("smoothing_8_8.png")
+#correlate(image, norm_gaus_mask_7_7).save("sf_smoothing_7_7.png")
+#correlate(image, norm_gaus_mask_8_8).save("sf_smoothing_8_8.png")
 
-image = salt_pepper_noise(image)
-image.save("salt_pepper.png")
+image30 = salt_pepper_noise(image, 30)
+image30.save("lenna_30_salt_pepper.png")
 
-median_input = int(input("Enter the size of your median filter: "))
-filter = [[1]*median_input]*median_input
-correlate(image, filter, median_flag=1).save("median_filtering.png")
+image50 = salt_pepper_noise(image, 50)
+image50.save("lenna_50_salt_pepper.png")
+
+# median_input = int(input("Enter the size of your median filter: "))
+filter1 = [[1]*7]*7
+filter2 = [[1]*15]*15
+correlate(image30, filter1, median_flag=0).save("lenna_7_average_filtering.png")
+correlate(image30, filter2, median_flag=0).save("lenna_15_average_filtering.png")
+correlate(image50, filter1, median_flag=0).save("lenna_50_7_average_filtering.png")
+correlate(image50, filter2, median_flag=0).save("lenna_50_15_average_filtering.png")
