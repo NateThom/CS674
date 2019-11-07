@@ -78,15 +78,15 @@ int main(int argc, char** argv) {
   float* data = new float[argc - 1];
 
   for (int i = 1; i < argc - 1; i++) {
-    data[i] = atoi(argv[i]);
+    data[i] = atof(argv[i]);
   }
 
   fft(data, n, mode);
   for(int i = 1; i < argc - 1; i++) {
     if (mode == -1)
-      std::cout << 1/float(n)*data[i] << " ";
-    else
       std::cout << data[i] << " ";
+    else
+      std::cout << data[i]/float(n) << " ";
   }
 
   return 0;

@@ -1,35 +1,54 @@
 import fft
-import math
+import matplotlib.pyplot as plt
+from math import cos, pi
 
 fft_func = fft.FFT()
 
-# Be sure to leave a zero in every other space in the array to account for imaginary numbers
-# data = [1, 0, 2, 0, 3, 0, 4, 0]
-
-# Pass 1 for forward, -1 for inverse
-# transform = fft_func.fourier_transform(data, 1)
-# inv_transform = fft_func.fourier_transform(transform, -1)
-
-# print(data)
-# print(transform)
-# print(inv_transform)
-
+experiment1 = True
+experiment2 = True
+experiment3 = True
 
 # Experiment 1
 # Part 1
-data = [2, 0, 3, 0, 4, 0, 4, 0]
-transform = fft_func.fourier_transform(data, 1)
+# TODO: center transform
+def plot_transform_1d(data):
+    mag = [(data[i]**2 + data[i+1]**2)**(1/2) for i in range(len(data)//2)]
+    plt.plot([data[i] for i in range(len(data)//2)], 'o-', label="real")
+    plt.plot([data[i+1] for i in range(len(data)//2)], 'o-', label="imaginary")
+    plt.plot(mag, 'o-', label="magnitude")
+    plt.axhline(0, lw=1, color="grey")
+    plt.legend()
+    plt.show()
 
-magnitude = []
-phase = []
-for i in range(0, len(transform), 2):
-    magnitude.append(math.sqrt(transform[i]**2 + transform[i+1]**2))
-    phase.append(math.atan2(transform[i+1]/transform[i]))
+def gen_cos_wave(u, N):
+    return [cos(2*pi*u*x/N) for x in range(N)]
 
-# re = mag .* cos(phase);
-# im = mag .* sin(phase);
+if experiment1:
+    data = [2, 3, 4, 4]
+    transform = fft_func.fourier_transform(data, 1)
+    plot_transform_1d(transform)
+    print(transform)
 
-inverse_transform = fft_func.fourier_transform(transform, -1)
+    inverse_transform = fft_func.fourier_transform(transform, -1)
+    print(inverse_transform)
+
+    # Part 2
+    cos_wave = gen_cos_wave(8, 128)
+    plt.plot(cos_wave)
+    plt.show()
+    cos_transform = fft_func.fourier_transform(cos_wave, 1)
+    plot_transform_1d(cos_transform)
+
+    # Part 3
+    rect_func = []
+    with open("Rect_128.dat") as rect_file:
+        for line in rect_file:
+            rect_func.append(float(line))
+    plt.plot(rect_func)
+    plt.show()
+
+    rect_transform = fft_func.fourier_transform(rect_func, 1)
+    plot_transform_1d(rect_transform)
 
 # Experiment 2
 
