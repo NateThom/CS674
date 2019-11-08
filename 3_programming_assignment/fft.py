@@ -17,11 +17,9 @@ class FFT():
         else:
             data_complex = data
 
-        print(data_complex)
         output = subprocess.check_output(["./fft"] + [str(d) for d in data_complex]
                                          + [str(mode)]).split()
         transform = [float(t) for t in output]
-        print(transform)
 
         # Get rid of imaginary values for inverse transform
         if mode == -1:
