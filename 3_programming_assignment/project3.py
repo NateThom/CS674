@@ -62,6 +62,7 @@ if experiment1:
     plot_transform_1d(rect_transform)
 
 # Experiment 2
+#uses Experiment 1's DFT and just goes across the rows
 def dft2d(data, mode):
 
     transform = [[0 for x in range(len(data[0])*2)] for y in range(len(data[0])*2)] 
@@ -70,6 +71,7 @@ def dft2d(data, mode):
 
     return transform
 
+#make a single square with a black background
 def SquareImage():
     im = Image.new("L", (512, 512), "black")
     im.paste("white", (256-16,256-16, 256+16,256+16))
@@ -77,22 +79,15 @@ def SquareImage():
 
 # Part1
 if experiment2:
+    #convert from square image
     squareImage = SquareImage()
     numpyArray = numpy.array(squareImage)
-    print(numpyArray)
+    #to numpy array
     squareList = numpyArray.tolist()
 
+    # run 2dFFT where 1 is forward and -1 is inverse FFTs
     transform = dft2d(squareList, 1)
-    #print(transform)
     inverseTransform = dft2d(transform, -1)
 
-    #print(inverseTransform)
-"""
-    transformNumpy = numpy.array(inverseTransform)
-    transformImage = Image.fromarray(transformNumpy)
-    transformImage.show()
-    #im = Image.fromarray(a, "L")
-    #im.show()
-"""
 # Part2
 # Experiment 3
