@@ -64,7 +64,7 @@ if experiment1:
 # Experiment 2
 def dft2d(data, mode):
 
-    transform = [[0 for x in range(len(data[0]))] for y in range(len(data[0]))] 
+    transform = [[0 for x in range(len(data[0])*2)] for y in range(len(data[0])*2)] 
     for y in range(0, len(data[0])):
         transform[y] = fft_func.fourier_transform(data[y], mode)
 
@@ -79,13 +79,20 @@ def SquareImage():
 if experiment2:
     squareImage = SquareImage()
     numpyArray = numpy.array(squareImage)
+    print(numpyArray)
     squareList = numpyArray.tolist()
 
     transform = dft2d(squareList, 1)
+    #print(transform)
     inverseTransform = dft2d(transform, -1)
 
+    #print(inverseTransform)
+"""
+    transformNumpy = numpy.array(inverseTransform)
+    transformImage = Image.fromarray(transformNumpy)
+    transformImage.show()
     #im = Image.fromarray(a, "L")
     #im.show()
-
+"""
 # Part2
 # Experiment 3
