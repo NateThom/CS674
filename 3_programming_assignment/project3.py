@@ -1,10 +1,12 @@
 import fft
 import matplotlib.pyplot as plt
+import numpy
 from math import cos, pi
+from PIL import Image
 
 fft_func = fft.FFT()
 
-experiment1 = True
+experiment1 = False
 experiment2 = True
 experiment3 = True
 
@@ -60,5 +62,30 @@ if experiment1:
     plot_transform_1d(rect_transform)
 
 # Experiment 2
+def dft2d(data, mode):
 
+    transform = [[0 for x in range(len(data[0]))] for y in range(len(data[0]))] 
+    for y in range(0, len(data[0])):
+        transform[y] = fft_func.fourier_transform(data[y], mode)
+
+    return transform
+
+def SquareImage():
+    im = Image.new("L", (512, 512), "black")
+    im.paste("white", (256-16,256-16, 256+16,256+16))
+    return im
+
+# Part1
+if experiment2:
+    squareImage = SquareImage()
+    numpyArray = numpy.array(squareImage)
+    squareList = numpyArray.tolist()
+
+    transform = dft2d(squareList, 1)
+    inverseTransform = dft2d(transform, -1)
+
+    #im = Image.fromarray(a, "L")
+    #im.show()
+
+# Part2
 # Experiment 3
