@@ -1,7 +1,7 @@
 import fft
 import matplotlib.pyplot as plt
 import numpy
-from math import cos, pi
+from math import cos, pi, floor
 from PIL import Image
 
 fft_func = fft.FFT()
@@ -66,21 +66,25 @@ if experiment1:
 def dft2d(data, mode):
 
     transform = [[0 for x in range(len(data[0])*2)] for y in range(len(data[0])*2)] 
-    for y in range(0, len(data[0])):
-        transform[y] = fft_func.fourier_transform(data[y], mode)
-
+    for x in range(0, len(data[0])):
+        transform[x] = fft_func.fourier_transform(data[x], mode)
+        for y in range(0, len(data[0])):
+            multiplier = 10 ** 3
+            transform[x][y] = floor(transform[x][y]*multiplier + 0.5) / multiplier
     return transform
 
-#make a single square with a black background
-def SquareImage():
+#make a single square of size squareSize with a black background
+def SquareImage(squareSize):
+    size = squareSize/2
+    size = int(size)
     im = Image.new("L", (512, 512), "black")
-    im.paste("white", (256-16,256-16, 256+16,256+16))
+    im.paste("white", (256-size,256-size, 256+size,256+size))
     return im
 
 # Part1
 if experiment2:
     #convert from square image
-    squareImage = SquareImage()
+    squareImage = SquareImage(32)
     numpyArray = numpy.array(squareImage)
     #to numpy array
     squareList = numpyArray.tolist()
