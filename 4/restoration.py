@@ -101,6 +101,7 @@ def matmul(a, b):
 
     return result
 
+# Hadamard is just broadcasting (element by element mlutiplication
 def complex_hadamard(a, b):
     result = []
     for i in range(len(a)):
