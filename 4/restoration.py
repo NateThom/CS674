@@ -145,23 +145,32 @@ def unpad(image, pad_len):
 
     return image[:pad_len]
 
-a = [[1, 1, 3, 0],
-     [2, 0, 1, 1]]
+def convolve(input, filter, padding=0):
+    width = len(input)
+    height = len(input[0])
 
-b = [[2,  0, 1, 0],
-     [2, -1, 3, 3]]
+    conv_size = len(filter)
 
-print(complex_hadamard(a, b))
+    output = []
 
-image = Image.open("nate.pgm")
+    for i in range(width):
+        output.append([])
+        for j in range(height):
+            weighted_sum = 0
+            # Assumes square
+            for n in range(conv_size):
+                for k in range(conv_size):
+                    v_offset = n - conv_size // 2
+                    h_offset = k - conv_size // 2
+                    if i + h_offset < 0 or i + h_offset >= width \
+                            or j + v_offset < 0 \
+                            or j + v_offset >= height:
+                        weighted_sum += padding
+                    else:
+                        weighted_sum += input[i + h_offset][j + v_offset] * filter[n][k]
+            output[i].append(int(weighted_sum))
 
-width, height = image.size
-image_pixels = image.load()
-image_list = []
-for x in range(width):
-    image_list.append([])
-    for y in range(height):
-        image_list[x].append(image.getpixel((y,x)))
+    return output
 
 def gaussian_filter(size, var):
     return [[gauss(i - size//2, j - size//2,var) for i in range(size)]
@@ -170,21 +179,59 @@ def gaussian_filter(size, var):
 def gauss(x, y, var):
     return 1/(2*pi*var)*e**(-(x**2+y**2)/(2*var))
 
-filter = gaussian_filter(7, 1.6)
+test = True
+experiment1 = False
+experiment2 = False
+experiment3 = False
+experiment4 = False
 
-plot_transform_2d(add_zero(image_list), use_log=False)
-image_list, filter, pad_len = pad_zeros(image_list, filter)
+if test:
+    a = [[1, 1, 3, 0],
+         [2, 0, 1, 1]]
 
-image_transform = dft2d(center_2d_transform(image_list), 1)
-filter_transform = dft2d(center_2d_transform(filter), 1)
-plot_transform_2d(image_transform)
-plot_transform_2d(filter_transform)
+    b = [[2,  0, 1, 0],
+         [2, -1, 3, 3]]
 
-filtered_image_freq = complex_hadamard(image_transform, filter_transform)
+    print(complex_hadamard(a, b))
+    print(matmul(a, b))
 
-image_inverse_transform = dft2d(filtered_image_freq, -1)
-remove_centering_2d_transform(image_inverse_transform)
+    a_transform = dft2d(center_2d_transform(a), 1)
+    b_transform = dft2d(center_2d_transform(b), 1)
 
-filtered_image = unpad(image_inverse_transform, pad_len)
+    print(convolve(a, b))
 
-plot_transform_2d(filtered_image, use_log=False)
+    a_inverse_transform = dft2d(a_transform, -1)
+    b_inverse_transform = dft2d(b_transform, -1)
+
+    a_inverse_transform = remove_centering_2d_transform(a_inverse_transform)
+    b_inverse_transform = remove_centering_2d_transform(b_inverse_transform)
+    print()
+
+    # image = Image.open("nate.pgm")
+
+    # width, height = image.size
+    # image_pixels = image.load()
+    # image_list = []
+    # for x in range(width):
+    #     image_list.append([])
+    #     for y in range(height):
+    #         image_list[x].append(image.getpixel((y,x)))
+
+    # filter = gaussian_filter(7, 1.6)
+
+    # plot_transform_2d(add_zero(image_list), use_log=False)
+    # image_list, filter, pad_len = pad_zeros(image_list, filter)
+
+    # image_transform = dft2d(center_2d_transform(image_list), 1)
+    # filter_transform = dft2d(center_2d_transform(filter), 1)
+    # plot_transform_2d(image_transform)
+    # plot_transform_2d(filter_transform)
+
+    # filtered_image_freq = complex_hadamard(image_transform, filter_transform)
+
+    # image_inverse_transform = dft2d(filtered_image_freq, -1)
+    # remove_centering_2d_transform(image_inverse_transform)
+
+    # filtered_image = unpad(image_inverse_transform, pad_len)
+
+    # plot_transform_2d(filtered_image, use_log=False)
