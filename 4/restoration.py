@@ -1,7 +1,7 @@
 from PIL import Image
 import fft
 import matplotlib.pyplot as plt
-from math import cos, sin, pi, e, log
+from math import cos, sin, pi, e, log, exp
 import numpy as np
 
 def add_zero(data):
@@ -104,7 +104,7 @@ def matmul(a, b):
 
     return result
 
-# Hadamard is just broadcasting (element by element mlutiplication
+# Hadamard is just broadcasting (element by element multiplication
 def complex_hadamard(a, b):
     result = []
     for i in range(len(a)):
@@ -200,6 +200,35 @@ def pad_zeros(image, filter, pad_value=0):
 
     return image, filter, padding - n
 
+# def pad_filter_zeros(image, filter, pad_value=0):
+#     n = len(image)
+#     m = len(filter)
+#
+#     # Padding must be at least n + m - 1
+#     min_padding = n + m -1
+#     # Pad to a power of 2
+#     padding = 0
+#     exponent = 1
+#     while padding < min_padding:
+#         padding = 2**exponent
+#         exponent += 1
+#
+#     temp = []
+#     temp_row = [0 for i in range(padding)]
+#     for i in range(padding):
+#         temp.append(temp_row)
+#     print(len(temp), len(temp[0]))
+#
+#     for i in range(len(filter)):
+#         for j in range(len(filter[i])):
+#             print(f"Row: {(len(temp)//2) - (i - (len(filter)//2))}")
+#             print(f"Column: {(len(temp[0])//2 - (j - (len(filter[0])//2)))}")
+#             temp[(len(temp)//2) - (i - (len(filter)//2))][(len(temp[0])//2 - (j - (len(filter[0])//2)))] = filter[i][j]
+#
+#     print(len(temp), len(temp[0]))
+#
+#     return temp
+
 def unpad(image, pad_len):
     if pad_len == 0:
         return image
@@ -294,13 +323,126 @@ def add_noise(matrix, mu, sigma):
 
     return result
 
+def convolve(image, convolution, padding=0):
+    width, height = len(image[0]), len(image)
+    conv_size = len(convolution)
+
+    new_img = []
+
+    for i in range(width):
+        new_img.append([])
+        for j in range(height):
+            weighted_sum = 0
+            for n in range(conv_size):
+                for k in range(conv_size):
+                    v_offset = n - conv_size // 2
+                    h_offset = k - conv_size // 2
+                    if i + h_offset < 0 or i + h_offset >= width\
+                                        or j + v_offset < 0\
+                                        or j + v_offset >= height:
+                        weighted_sum += padding
+                    else:
+                        weighted_sum += image[i+h_offset][j+v_offset]*convolution[n][k]
+            new_img[i].append(int(weighted_sum))
+
+    return new_img
+
+experiment2 = False
+experiment4 = True
 edges_test = False
-apply_motion_blur = True
-remove_motion_blur = True
-remove_motion_blur_wiener = True
+apply_motion_blur = False
+remove_motion_blur = False
+remove_motion_blur_wiener = False
+
+if experiment2:
+    sobel = [[-1,0,1],[-2,0,2],[-1,0,1]]
+
+    lenna = get_image_list("/home/nthom/Documents/CS674/images-pgm/lenna.pgm")
+
+    spatial_filtered_image = convolve(lenna, sobel)
+
+    plt.imshow(spatial_filtered_image, cmap="gray")
+    plt.show()
+
+    spatial_filtered_output = list_to_image(spatial_filtered_image)
+    spatial_filtered_output.save("exp2_spatial.jpg")
+
+    sobel = [[0,0,0,0],[0,-1,0,1],[0,-2,0,2],[0,-1,0,1]]
+    # temp_filter = pad_filter_zeros(lenna, sobel)
+    lenna, filter, pad_len = pad_zeros(lenna, sobel)
+    centered_nate = center_2d_transform(lenna)
+    centered_filter = center_2d_transform(sobel)
+
+    image_transform = dft2d(centered_nate, 1)
+    filter_transform = dft2d(centered_filter, 1)
+
+    filtered_image_freq = complex_hadamard(image_transform, filter_transform)
+
+    plot_transform_2d(image_transform)
+    plot_transform_2d(filter_transform)
+    plot_transform_2d(filtered_image_freq)
+
+    image_inverse_transform = dft2d(filtered_image_freq, -1)
+
+    uncentered = remove_centering_2d_transform(image_inverse_transform)
+
+    filtered_image = unpad(uncentered, pad_len)
+    plt.imshow(filtered_image, cmap="gray")
+    plt.show()
+    filtered_output = list_to_image(filtered_image)
+    filtered_output.save("exp2_freq.jpg")
+
+if experiment4:
+    girl = get_image_list("/home/nthom/Documents/CS674/images-pgm/girl.pgm")
+
+    ln_girl = []
+    for i in range(len(girl)):
+        ln_girl.append([])
+        for j in range(len(girl[i])):
+            ln_girl[i].append(log(girl[i][j] + 1))
+
+    centered_girl = center_2d_transform(ln_girl)
+
+    transformed_girl = dft2d(centered_girl, 1)
+
+    filter = []
+    lambda_low = 0.5
+    lambda_high = 1.5
+    cuttoff_frequency = 1.8
+    c = 1
+    for i in range(len(transformed_girl)):
+        filter.append([])
+        for j in range(len(transformed_girl[0]) // 2):
+            lambda_difference = lambda_high - lambda_low
+            spectrum_position_sum = (i - len(transformed_girl) // 2) ** 2 + (j - len(transformed_girl[i]) // 2) ** 2
+            filter_term = 1 - (exp(-c * (spectrum_position_sum / cuttoff_frequency ** 2)))
+            filter[-1].append((lambda_difference * filter_term) + lambda_low)
+            filter[-1].append((lambda_difference * filter_term) + lambda_low)
+
+    print(len(transformed_girl), len(transformed_girl[0]))
+    print(len(filter), len(filter[0]))
+    filtered_girl = complex_hadamard(transformed_girl, filter)
+    plot_transform_2d(transformed_girl)
+    plot_transform_2d(filtered_girl)
+
+    inverse_transformed_girl = dft2d(filtered_girl, -1)
+    uncentered_girl = remove_centering_2d_transform(inverse_transformed_girl)
+
+    output_girl = []
+    for i in range(len(uncentered_girl)):
+        output_girl.append([])
+        for j in range(len(uncentered_girl[i])):
+            output_girl[i].append(log(uncentered_girl[i][j] + 1))
+    plt.imshow(output_girl, cmap="gray")
+    plt.show()
+    plt.imshow(girl, cmap="gray")
+    plt.show()
+
+    filtered_output = list_to_image(output_girl)
+    filtered_output.save("homomorphic_girl.jpg")
 
 if edges_test:
-    filter = [[1,1,1],[0,0,0],[-1,-1,-1]]
+    filter = [[1,2,1],[0,0,0],[-1,-2,-1]]
     nate = get_image_list("nate.pgm")
 
     nate, filter, pad_len = pad_zeros(nate, filter)
