@@ -3,6 +3,7 @@ import fft
 import matplotlib.pyplot as plt
 from math import cos, sin, pi, e, log, exp
 import numpy as np
+import cv2
 
 def add_zero(data):
     new_data = []
@@ -347,6 +348,15 @@ def convolve(image, convolution, padding=0):
 
     return new_img
 
+def SquareImage(squareSize):
+    size = squareSize/2
+    size = int(size)
+    im = Image.new("L", (512, 512), "black")
+    im.paste("white", (128-size,128-size, 128+size,128+size))
+    im.paste("white", (256-size, 256-size, 256+size, 256+size))
+    return im
+
+noise_removal = True
 experiment2 = False
 experiment4 = True
 edges_test = False
@@ -354,6 +364,48 @@ apply_motion_blur = False
 remove_motion_blur = False
 remove_motion_blur_wiener = False
 
+if noise_removal:
+    gaussianMask7 =[[1,1,2,2,2,1,1],[1,2,2,4,2,2,1],[2,2,4,8,4,2,2],[2,4,8,16,8,4,2],[2,2,4,8,4,2,2],[1,2,2,4,2,2,1],[1,1,2,2,2,1,1]] 
+    
+    noisyBoy = get_image_list("boy_noisy.pgm")
+    """
+    gaussianSpatial = convolve(noisyBoy, gaussianMask7)
+    plt.imshow(gaussianSpatial, cmap="gray")
+    plt.show()
+
+    butter_filter = butterworth_band_reject(1,1,1)
+    frequency_boy = dft2d(noisyBoy,1)
+    butter_boy = convolve(frequency_boy, butter_filter)
+
+    plt.imshow(butter_boy, cmap="gray")
+    plt.show()
+    """
+
+    #convert from square image
+    squareImage = SquareImage(30)
+    numpyArray = np.array(squareImage)
+    numpArray2d = np.stack([numpyArray, numpyArray], axis = 2)
+    #to numpy array
+    #squareList = numpyArray.tolist()
+
+    transform = dft2d(center_2d_transform(noisyBoy), 1)
+
+    #dfts = cv2.dft(np.asarray(noisyBoy, np.float32), flags = cv2.DFT_COMPLEX_OUTPUT)
+    #dft_shift = np.fft.fftshift(dfts)
+
+    #transform_Convolved = numpArray2d*dft_shift
+
+    transform_Convolved = complex_hadamard(transform, numpyArray)
+
+    #inverse_transform = np.fft.ifft2(transform_Convolved)
+    #return_image = np.fft.ifftshift(inverse_transform, 2)
+    transform_inverse = dft2d(transform_Convolved, -1)
+    transform_rcentered = remove_centering_2d_transform(transform_inverse)
+    #x,y = np.moveaxis(return_image.real,-1,0)
+    #z = x*y
+    plt.imshow(transform_rcentered,cmap="gray")
+    plt.show()
+    
 if experiment2:
     sobel = [[-1,0,1],[-2,0,2],[-1,0,1]]
 
